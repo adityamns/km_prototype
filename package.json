@@ -1,0 +1,23 @@
+{
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "install-all": "composer install && npm install && cd embedding_service && pip install -r requirements.txt",
+        "install-all-linux": "composer install && npm install && bash install-linux.sh",
+        "serve-all": "concurrently \"php artisan serve\" \"cd embedding_service && uvicorn main:app --host 0.0.0.0 --port 8180 --reload\"",
+        "serve-all-linux": "concurrently -k -n PHP,UVICORN -c yellow,cyan \"php artisan serve\" \"cd embedding_service && ./myenv/bin/uvicorn main:app --host 0.0.0.0 --port 8180\"",
+ "serve-all-linux-dev": "concurrently -k -n PHP,UVICORN -c yellow,cyan \"php artisan serve\" \"cd embedding_service && ./myenv/bin/uvicorn main:app --host 0.0.0.0 --port 8180 --reload\""
+    },
+    "devDependencies": {
+        "axios": "^1.1.2",
+        "concurrently": "^9.2.0",
+        "laravel-vite-plugin": "^0.7.5",
+        "vite": "^4.0.0"
+    },
+    "dependencies": {
+        "cloudscraper": "^4.6.0",
+        "puppeteer": "^24.10.2"
+    }
+}
