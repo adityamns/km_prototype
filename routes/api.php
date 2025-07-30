@@ -26,6 +26,10 @@ Route::post('/store_file', [KnowledgeController::class, 'storePdf']);
 Route::post('/store_url', [KnowledgeController::class, 'storeFromUrl']);
 Route::post('/embed', [KnowledgeController::class, 'embedText']);
 Route::post('/similarity', [KnowledgeController::class, 'searchSimilarKnowledge']);
+Route::get('/knowledges/crawl/{agent_id}', [KnowledgeController::class, 'getCrawledDocuments']);
+Route::get('/knowledges/pdf/{agent_id}', [KnowledgeController::class, 'getPdfDocuments']);
+Route::get('/knowledges/manual/{agent_id}', [KnowledgeController::class, 'getManualTexts']);
+Route::delete('/knowledges/{document_id}', [KnowledgeController::class, 'deleteByDocumentId']);
 
 Route::get('/agents', [AgentController::class, 'index']);
 Route::post('/agents', [AgentController::class, 'store']);

@@ -1,7 +1,12 @@
-fastapi
-uvicorn
-sentence-transformers
-psycopg2-binary
-sqlalchemy
-python-dotenv
-tzdata
+fastapi==0.110.0
+uvicorn==0.29.0
+python-dotenv==1.0.1
+sentence-transformers==3.0.0
+transformers==4.40.1
+# Install torch CPU-only dari index resmi
+--find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+torch==2.2.2+cpu
+psycopg2-binary==2.9.9
+pydantic==1.10.14
+langchain==0.1.14
+

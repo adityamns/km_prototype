@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"   # Laravel
+      - "8180:8180"   # FastAPI
+    volumes:
+      - .:/var/www/html
+      - ./secrets/.env:/secrets/.env:ro
+      - ./secrets/oauth-public.key:/secrets/oauth-public.key:ro
+      - ./secrets/oauth-private.key:/secrets/oauth-private.key:ro
+    restart: unless-stopped
+

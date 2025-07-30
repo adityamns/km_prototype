@@ -24,6 +24,7 @@ return new class extends Migration
             $table->jsonb('filters')->nullable();
             $table->boolean('is_active')->default(true);
             $table->boolean('is_publish')->default(false);
+            $table->boolean('is_private')->default(false);
 
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();

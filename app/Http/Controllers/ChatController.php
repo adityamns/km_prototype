@@ -76,7 +76,7 @@ class ChatController extends Controller
             $tempRequest->merge([
                 'text' => $request->message,
                 'agent_id' => $request->agent_id,
-                'limit' => 5,
+                'limit' => 20,
             ]);
             // --- Step 1: Ambil Knowledge Berdasarkan Pesan ---
             $knowledgeResponse = $knowledgeController->searchSimilarKnowledge($tempRequest);
@@ -243,6 +243,7 @@ class ChatController extends Controller
         $validator = Validator::make($request->all(), [
             'access_key' => 'required',
             'message' => 'required|string',
+            'history' => 'string',
         ]);
 
         if ($validator->fails()) {
@@ -271,7 +272,7 @@ class ChatController extends Controller
             $tempRequest->merge([
                 'text' => $request->message,
                 'agent_id' => $request->agent_id,
-                'limit' => 5,
+                'limit' => 10,
             ]);
             // --- Step 1: Ambil Knowledge Berdasarkan Pesan ---
             $knowledgeResponse = $knowledgeController->searchSimilarKnowledge($tempRequest);
@@ -279,11 +280,27 @@ class ChatController extends Controller
             // --- Step 2: Siapkan prompt untuk OpenRouter ---
             $contextText = collect($knowledgeData)->pluck('text')->implode("\n");
 
-            $messages = [
-                ['role' => 'system', 'content' => $agent->system_prompt],
-                ['role' => 'user', 'content' => "Berikut adalah referensi:\n\n" . $contextText],
-                ['role' => 'user', 'content' => $request->message],
-            ];
+            $history = [];
+
+            if (!empty($request->history)) {
+                try {
+                    $decodedHistory = json_decode($request->history, true);
+                    if (is_array($decodedHistory)) {
+                        // Ambil 2 history terakhir
+                        $history = collect($decodedHistory)->take(-2)->values()->all();
+                    }
+                } catch (\Exception $e) {
+                    // Jika gagal decode, abaikan saja
+                    $history = [];
+                }
+            }
+
+            $messages = array_merge(
+                [['role' => 'system', 'content' => $agent->system_prompt]],
+                $history,
+                [['role' => 'user', 'content' => "Berikut adalah referensi:\n\n" . $contextText]],
+                [['role' => 'user', 'content' => $request->message]]
+            );
 
             // --- Step 3: Kirim ke OpenRouter ---
             $openRouterResponse = Http::withHeaders([
