@@ -21,6 +21,7 @@ return [
 
     'allowed_origins' => [
                             'http://localhost:4200',
+                            'http://localhost:3001',
                             'https://checkin.telkomuniversity.ac.id',
                             'https://checkin-employee.telkomuniversity.ac.id',
                             'https://situ-keu.telkomuniversity.ac.id',
