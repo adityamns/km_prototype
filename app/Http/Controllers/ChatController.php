@@ -148,11 +148,7 @@ class ChatController extends Controller
     public function getList(Request $request, $agent_id)
     {
         $user_id = optional($request->user())->id ?? 'developer';
-        $query = Chat::where('user_id', $user_id);
-
-        if ($request->filled('agent_id')) {
-            $query = $query->where('agent_id', $agent_id);
-        }
+        $query = Chat::where('user_id', $user_id)->where('agent_id', $agent_id);
 
         $chats = $query->latest()->get();
 
