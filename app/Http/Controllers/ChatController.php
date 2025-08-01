@@ -151,7 +151,7 @@ class ChatController extends Controller
         $query = Chat::where('user_id', $user_id);
 
         if ($request->filled('agent_id')) {
-            $query->where('agent_id', $agent_id);
+            $query = $query->where('agent_id', $agent_id);
         }
 
         $chats = $query->latest()->get();
