@@ -12,12 +12,13 @@ class Agent extends Model
         'name',
         'model',
         'temperature',
-        'openrouter_key',
+        'key',
         'description',
         'system_prompt',
         'filters',
         'is_active',
-        'is_publish',
+        'is_public',
+        'is_internal',
         'created_by',
         'updated_by',
     ];
@@ -25,6 +26,7 @@ class Agent extends Model
     protected $casts = [
         'filters' => 'array',
         'is_active' => 'boolean',
-        'is_publish' => 'boolean',
+        'is_public' => 'boolean',
+        'is_internal' => 'boolean',
     ];
 }
