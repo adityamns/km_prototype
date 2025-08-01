@@ -29,11 +29,12 @@ class AgentController extends Controller
             'name' => 'required|string|max:255',
             'model' => 'required|string',
             'temperature' => 'nullable|numeric',
-            'openrouter_key' => 'nullable|string',
+            'key' => 'nullable|string',
             'description' => 'nullable|string',
             'system_prompt' => 'nullable|string',
             'filters' => 'nullable|array',
-            'is_publish' => 'boolean',
+            'is_public' => 'boolean',
+            'is_internal' => 'boolean',
         ]);
 
         if ($validator->fails()) {
@@ -109,12 +110,12 @@ class AgentController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'model' => 'required|string',
             'temperature' => 'nullable|numeric',
-            'openrouter_key' => 'nullable|string',
+            'key' => 'nullable|string',
             'description' => 'nullable|string',
             'system_prompt' => 'nullable|string',
             'filters' => 'nullable|array',
-            'is_active' => 'boolean',
-            'is_publish' => 'boolean',
+            'is_internal' => 'boolean',
+            'is_public' => 'boolean',
         ]);
 
         if ($validator->fails()) {
