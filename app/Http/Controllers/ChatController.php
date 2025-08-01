@@ -64,6 +64,8 @@ class ChatController extends Controller
                 ]);
             }
 
+            var_dump($chat);   die;
+
             // Simpan pesan user ke history
             $userMessage = ChatHistory::create([
                 'chat_id' => $chat->id,
