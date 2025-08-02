@@ -29,6 +29,7 @@ Route::post('/similarity', [KnowledgeController::class, 'searchSimilarKnowledge'
 Route::get('/knowledges/crawl/{agent_id}', [KnowledgeController::class, 'getCrawledDocuments'])->middleware(['verify.token.scope:old-pegawai']);
 Route::get('/knowledges/pdf/{agent_id}', [KnowledgeController::class, 'getPdfDocuments'])->middleware(['verify.token.scope:old-pegawai']);
 Route::get('/knowledges/manual/{agent_id}', [KnowledgeController::class, 'getManualTexts'])->middleware(['verify.token.scope:old-pegawai']);
+Route::get('/knowledges/all/{agent_id}', [KnowledgeController::class, 'getAllKnowledge'])->middleware(['verify.token.scope:old-pegawai']);
 Route::delete('/knowledges/{document_id}', [KnowledgeController::class, 'deleteByDocumentId'])->middleware(['verify.token.scope:old-pegawai']);
 
 Route::get('/agents', [AgentController::class, 'index'])->middleware(['verify.token.scope:old-pegawai']);
@@ -36,6 +37,9 @@ Route::post('/agents', [AgentController::class, 'store'])->middleware(['verify.t
 Route::get('/agents/{id}', [AgentController::class, 'show'])->middleware(['verify.token.scope:old-pegawai']);
 Route::put('/agents/{id}', [AgentController::class, 'update'])->middleware(['verify.token.scope:old-pegawai']);
 Route::delete('/agents/{id}', [AgentController::class, 'destroy'])->middleware(['verify.token.scope:old-pegawai']);
+Route::get('/get-model', [AgentController::class, 'getListModel'])->middleware(['verify.token.scope:old-pegawai']);
+Route::get('/get-list-agent-dashboard', [AgentController::class, 'getListAgentDashboard'])->middleware(['verify.token.scope:old-pegawai']);
+Route::get('/get-list-agent-playground', [AgentController::class, 'getListAgentPlayground'])->middleware(['verify.token.scope:old-pegawai']);
 
 
 Route::post('/chats', [ChatController::class, 'chat'])->middleware(['verify.token.scope:old-pegawai']);

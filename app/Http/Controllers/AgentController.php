@@ -23,11 +23,35 @@ class AgentController extends Controller
         ]);
     }
 
+    public function getListAgentDashboard(Request $request)
+    {
+        $perPage = $request->get('per_page', 10);
+        $agents = Agent::where('is_private', true)->paginate($perPage);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'List agent berhasil diambil.',
+            'data' => $agents
+        ]);
+    }
+
+      public function getListAgentPlayground(Request $request)
+    {
+        $perPage = $request->get('per_page', 10);
+        $agents = Agent::where('user_id', optional($request->user())->id ?? 'developer')->paginate($perPage);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'List agent berhasil diambil.',
+            'data' => $agents
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'model' => 'required|string',
+            'model' => 'required|array',
             'temperature' => 'nullable|numeric',
             'key' => 'nullable|string',
             'description' => 'nullable|string',
@@ -108,7 +132,7 @@ class AgentController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
-            'model' => 'required|string',
+            'model' => 'required|array',
             'temperature' => 'nullable|numeric',
             'key' => 'nullable|string',
             'description' => 'nullable|string',
@@ -185,5 +209,31 @@ class AgentController extends Controller
                 'data' => null
             ], 500);
         }
+    }
+
+    public function getListModel()
+    {
+        $models = [
+            'qwen/qwen3-coder:free',
+            'moonshotai/kimi-k2:free',
+            'tencent/hunyuan-a13b-instruct:free',
+            'tngtech/deepseek-r1t2-chimera:free',
+            'mistralai/mistral-small-3.2-24b-instruct:free',
+            'moonshotai/kimi-dev-72b:free',
+            'deepseek/deepseek-r1-0528-qwen3-8b:free',
+            'deepseek/deepseek-r1-0528:free',
+            'qwen/qwen3-4b:free',
+            'qwen/qwen3-30b-a3b:free',
+            'qwen/qwen3-8b:free',
+            'qwen/qwen3-14b:free',
+            'qwen/qwen3-235b-a22b:free',
+            'tngtech/deepseek-r1t-chimera:free',
+        ];
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Berhasil mendapatkan data model',
+            'data' => $models
+        ]);
     }
 }

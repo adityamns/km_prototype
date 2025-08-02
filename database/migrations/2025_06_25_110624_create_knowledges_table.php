@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('user_id')->nullable();
             $table->unsignedBigInteger('agent_id')->nullable();
             $table->text('text');
-            $table->vector('embedding', 384);
+            $table->vector('embedding', 768);
             $table->enum('source', ['manual', 'pdf', 'crawl']);
 
             $table->string('document_id')->nullable();              // ID unik dokumen (jika dari PDF, bisa file_id)

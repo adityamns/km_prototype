@@ -19,7 +19,7 @@ class ChatController extends Controller
     public function chat(Request $request, KnowledgeController $knowledgeController)
     {
         $validator = Validator::make($request->all(), [
-            'chat_id' => 'nullable',
+            'chat_id' => 'nullable|integer',
             'agent_id' => 'required|exists:agents,id',
             'message' => 'required|string',
         ]);
@@ -79,10 +79,10 @@ class ChatController extends Controller
                 'agent_id' => $request->agent_id,
                 'limit' => 20,
             ]);
-            // --- Step 1: Ambil Knowledge Berdasarkan Pesan ---
+
             $knowledgeResponse = $knowledgeController->searchSimilarKnowledge($tempRequest);
             $knowledgeData = $knowledgeResponse->getData(true)['data'];
-            // --- Step 2: Siapkan prompt untuk OpenRouter ---
+
             $contextText = collect($knowledgeData)->pluck('text')->implode("\n");
 
             $histories = ChatHistory::where('chat_id', $chat->id)
@@ -102,18 +102,16 @@ class ChatController extends Controller
                 ];
             }
 
-            // --- Step 3: Kirim ke OpenRouter ---
             $openRouterResponse = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $agent->openrouter_key,
+                'Authorization' => 'Bearer ' . $agent->key,
             ])->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => $agent->model,
+                'models' => $agent->model,
                 'messages' => $messages,
                 'temperature' => (float) $agent->temperature,
             ]);
 
             $reply = $openRouterResponse->json('choices.0.message.content');
 
-            // --- Step 4: Simpan jawaban dari AI ke history ---
             $assistantMessage = ChatHistory::create([
                 'chat_id' => $chat->id,
                 'role' => 'system',
@@ -233,14 +231,14 @@ class ChatController extends Controller
 
 
     /**
-     * Proses chat (create chat dan chat_history)
+     * Stateless chat (tidak disimpan dalam history chat)
      */
     public function stateless_chat(Request $request, KnowledgeController $knowledgeController)
     {
         $validator = Validator::make($request->all(), [
             'access_key' => 'required',
             'message' => 'required|string',
-            'history' => 'string',
+            'history' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -254,7 +252,7 @@ class ChatController extends Controller
         try {
             // Ambil data agent
             $agent = Agent::where('access_key', $request->access_key)
-                ->where('is_publish', true)
+                ->where('is_public', true)
                 ->first();
 
             if (!$agent) {
@@ -271,10 +269,8 @@ class ChatController extends Controller
                 'agent_id' => $request->agent_id,
                 'limit' => 10,
             ]);
-            // --- Step 1: Ambil Knowledge Berdasarkan Pesan ---
             $knowledgeResponse = $knowledgeController->searchSimilarKnowledge($tempRequest);
             $knowledgeData = $knowledgeResponse->getData(true)['data'];
-            // --- Step 2: Siapkan prompt untuk OpenRouter ---
             $contextText = collect($knowledgeData)->pluck('text')->implode("\n");
 
             $history = [];
@@ -283,11 +279,9 @@ class ChatController extends Controller
                 try {
                     $decodedHistory = json_decode($request->history, true);
                     if (is_array($decodedHistory)) {
-                        // Ambil 2 history terakhir
                         $history = collect($decodedHistory)->take(-2)->values()->all();
                     }
                 } catch (\Exception $e) {
-                    // Jika gagal decode, abaikan saja
                     $history = [];
                 }
             }
@@ -299,11 +293,10 @@ class ChatController extends Controller
                 [['role' => 'user', 'content' => $request->message]]
             );
 
-            // --- Step 3: Kirim ke OpenRouter ---
             $openRouterResponse = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $agent->openrouter_key,
+                'Authorization' => 'Bearer ' . $agent->key,
             ])->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => $agent->model,
+                'models' => $agent->model,
                 'messages' => $messages,
                 'temperature' => (float) $agent->temperature,
             ]);

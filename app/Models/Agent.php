@@ -24,6 +24,7 @@ class Agent extends Model
     ];
 
     protected $casts = [
+        'model' => 'array',
         'filters' => 'array',
         'is_active' => 'boolean',
         'is_public' => 'boolean',

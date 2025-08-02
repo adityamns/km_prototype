@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('user_id')->nullable();
             $table->string('access_key')->nullable();
-            $table->string('model');
+            $table->jsonb('model');
             $table->string('temperature')->default('0.7');
-            $table->string('openrouter_key')->nullable();
+            $table->string('key')->nullable();
             $table->string('name');
             $table->text('description')->nullable();
             $table->text('system_prompt')->nullable();

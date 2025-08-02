@@ -34,7 +34,7 @@ class KnowledgeController extends Controller
 
             $embedding = $this->embedder->embedAndStoreText($request);
 
-//var_dum($embedding); die;
+            //var_dum($embedding); die;
             if ($embedding) {
                 return response()->json(['message' => 'Knowledge saved successfully.'], 201);
             } else {
@@ -91,6 +91,7 @@ class KnowledgeController extends Controller
 
     public function storeFromUrl(Request $request)
     {
+        set_time_limit(300); // 300 detik = 5 menit
         try {
             $request->validate([
                 'url' => 'required|url',
@@ -116,12 +117,13 @@ class KnowledgeController extends Controller
 
             $embedding = $this->embedder->embedAndStoreText($request);
             if ($embedding) {
-                return response()->json(['message' => 'Knowledge saved successfully.'], 201);
+                return response()->json(['status'=> true,'message' => 'Knowledge saved successfully.'], 201);
             } else {
-                return response()->json(['message' => 'Knowledge failed successfully.'], 500);
+                return response()->json(['status'=> false,'message' => 'Knowledge failed to save.'], 500);
             }
         } catch (ValidationException $e) {
             return response()->json([
+                'status'=> false,
                 'message' => 'Validation error',
                 'errors' => $e->errors(),
             ], 422);
@@ -135,83 +137,103 @@ class KnowledgeController extends Controller
         return response()->json(['embedding' => $embedding]);
     }
 
-public function searchSimilarKnowledge(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'text' => 'required|string|min:2|max:10000',
-            'limit' => 'required|integer|min:1|max:50',
-            'agent_id' => 'nullable|integer|exists:agents,id',
-        ]);
+    public function searchSimilarKnowledge(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'text' => 'required|string|min:2|max:10000',
+                'limit' => 'required|integer|min:1|max:50',
+                'agent_id' => 'nullable|integer|exists:agents,id',
+            ]);
 
-        $embedding = $this->embedder->embedText($validated['text']);
-        $vector = '[' . implode(',', $embedding) . ']';
+            $embedding = $this->embedder->embedText($validated['text']);
+            $vector = '[' . implode(',', $embedding) . ']';
 
-        // Base SQL
-        $sql = "
+            // Base SQL
+            $sql = "
             SELECT id, text, agent_id,
                 1 - (embedding <=> ?::vector) AS similarity
             FROM knowledges
         ";
-        $bindings = [$vector];
+            $bindings = [$vector];
 
-        if (!empty($validated['agent_id'])) {
-            $sql .= " WHERE agent_id = ? ";
-            $bindings[] = $validated['agent_id'];
-        }
+            if (!empty($validated['agent_id'])) {
+                $sql .= " WHERE agent_id = ? ";
+                $bindings[] = $validated['agent_id'];
+            }
 
-        $sql .= " ORDER BY embedding <=> ?::vector ASC LIMIT ?";
-        $bindings[] = $vector;
-        $bindings[] = (int) $validated['limit'];
+            $sql .= " ORDER BY embedding <=> ?::vector ASC LIMIT ?";
+            $bindings[] = $vector;
+            $bindings[] = (int) $validated['limit'];
 
-        $result = DB::select($sql, $bindings);
-        // Jika result kosong, hentikan proses
-        if (empty($result)) {
-            return response()->json([
-                'message' => 'Knowledge Kosong',
-                'data' => [],
-            ]);
-        }
-        // Kirim ke Python FastAPI untuk rerank
-        $rerankPayload = [
-            'text' => $validated['text'],
-            'candidates' => array_map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'text' => $item->text,
-                ];
-            }, $result),
-        ];
+            $result = DB::select($sql, $bindings);
+            // Jika result kosong, hentikan proses
+            if (empty($result)) {
+                return response()->json([
+                    'message' => 'Knowledge Kosong',
+                    'data' => [],
+                ]);
+            }
+            // Kirim ke Python FastAPI untuk rerank
+            $rerankPayload = [
+                'text' => $validated['text'],
+                'candidates' => array_map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'text' => $item->text,
+                    ];
+                }, $result),
+            ];
 
-        $response = Http::post('http://localhost:8180/rerank', $rerankPayload); // sesuaikan port
+            $response = Http::post('http://localhost:8180/rerank', $rerankPayload); // sesuaikan port
 
-        if ($response->successful()) {
-            return response()->json([
-                'status' => true,
-                'data' => $response->json()['results'],
-            ]);
-        } else {
+            if ($response->successful()) {
+                return response()->json([
+                    'status' => true,
+                    'data' => $response->json()['results'],
+                ]);
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Gagal melakukan rerank',
+                    'debug' => $response->body()
+                ], 500);
+            }
+        } catch (ValidationException $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'Gagal melakukan rerank',
-                'debug' => $response->body()
+                'message' => 'Validation error',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Internal error',
+                'error' => $e->getMessage(),
             ], 500);
         }
-
-    } catch (ValidationException $e) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Validation error',
-            'errors' => $e->errors(),
-        ], 422);
-    } catch (\Throwable $e) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Internal error',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
+
+    public function getAllKnowledge($agent_id)
+    {
+        try {
+            $data = DB::table('knowledges')
+                ->where('agent_id', $agent_id)
+                ->get();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Crawled knowledge retrieved successfully.',
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to retrieve crawled knowledge.',
+                'data' => []
+            ], 500);
+        }
+    }
 
     public function getCrawledDocuments($agent_id)
     {
